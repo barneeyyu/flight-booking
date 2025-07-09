@@ -7,6 +7,7 @@ DB_FILE := flights.db
 all: build
 
 build:
+	rm -f $(APP_NAME) $(SEED_APP_NAME)
 	@echo "Building $(APP_NAME)..."
 	go build -o $(APP_NAME) main.go
 	@echo "Building $(SEED_APP_NAME)..."

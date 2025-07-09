@@ -20,13 +20,6 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	flightHandler := handler.NewFlightHandler(flightRepo, db)
 	bookingHandler := handler.NewBookingHandler(bookingRepo, flightRepo)
 
-	// Public routes
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
-
 	// Flight routes
 	r.GET("/flights", flightHandler.SearchFlights)
 	r.GET("/flights/:id", flightHandler.GetFlight)

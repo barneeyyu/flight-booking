@@ -62,15 +62,15 @@ go version
     make build
     ```
 
-4.  資料migration (Seeding Data)
+4.  資料填充 (Seeding Data)
 
     首次建置專案時需執行此語法將 mock 的機票 data insert 進 table（只需執行一次）
     ```bash
     make seed
     ```  
-    > 這將會向資料庫中插入約 500 筆航班資料。每次執行都會新增資料，請注意避免重複。
+    > 這將會向資料庫中插入約 1000 筆航班資料。每次執行都會新增資料，請注意避免重複。
     >
-    >如果您想清空資料庫並重新填充，可以先執行 `make clean` 再執行 `make seed`。
+    > 如果您想清空資料庫並重新填充，可以先執行 `make clean` 再執行 `make seed`。
 
 5.  運行應用程式
     ```bash
@@ -94,6 +94,11 @@ GET /flights?departure_airport=TPE&arrival_airport=HKG&date=2024-01-15&page=1&pa
 - `page`: 頁碼 (預設: 1)
 - `page_size`: 每頁筆數 (預設: 10)
 
+> **注意：** 由於資料填充 (Seeding Data) 限制，目前可查詢的航班資料特性如下：
+> -   **城市：** 僅限於 `Taipei`, `Tokyo`, `Seoul`, `Singapore`, `Hong Kong`。
+> -   **航空公司：** 僅限於 `EVA Air`, `China Airlines`, `Japan Airlines`, `All Nippon Airways`, `Korean Air`, `Asiana Airlines`, `Singapore Airlines`, `Cathay Pacific`。
+> -   **日期：** 僅限於 2025 年 8 月份。
+
 ### 2. 建立預訂
 ```
 POST /bookings
@@ -116,6 +121,12 @@ GET /bookings/:id
 ```
 GET /flights/:id
 ```
+
+## Postman Collection
+
+您可以匯入此 Postman Collection 檔案來測試所有 API 端點：
+
+[下載 Postman Collection](docs/postman/FlightBookingSystem.postman_collection.json)
 
 ## 資料庫結構
 
@@ -146,6 +157,9 @@ flight-booking/
 ├── cmd/
 │   └── seed/
 │       └── main.go        # 獨立的資料填充程式
+├── docs/
+│   └── postman/
+│       └── FlightBookingSystem.postman_collection.json        # 獨立的資料填充程式
 └── internal/
     ├── database/
     │   └── database.go    # 資料庫初始化和遷移邏輯
@@ -164,6 +178,7 @@ flight-booking/
 - 系統使用 SQLite 作為資料庫，資料庫檔案會自動創建為 `flights.db`
 - 預訂系統包含 20% 的超賣機率模擬真實情況
 - 支援分頁搜尋以處理大量航班資料
+- 搜尋航班 (GET /flights) 僅顯示部分欄位，若需完整航班資訊請使用查詢航班詳情 (GET /flights/:id) 端點。
 
 ## 授權
 
