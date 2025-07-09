@@ -24,34 +24,64 @@
 - Go 1.23.2 或更高版本
 - Git
 
+#### 安裝 Go
+
+如果您還沒有安裝 Go，請按照以下步驟：
+
+##### macOS (使用 Homebrew)
+```bash
+brew install go
+```
+##### Windows
+1. 前往 [Go 官方網站](https://golang.org/dl/) 下載 Windows 版本
+2. 執行 `.msi` 安裝檔案
+
+
+##### 驗證安裝
+安裝完成後，在終端機執行：
+```bash
+go version
+```
+應該會顯示類似 `go version go1.23.2 darwin/amd64` 的訊息。
+
 ### 安裝步驟
 
-1. clone project
-```bash
-git clone https://github.com/your-username/flight-booking.git
-cd flight-booking
-```
+1.  Clone project
+    ```bash
+    git clone https://github.com/your-username/flight-booking.git
+    cd flight-booking
+    ```
 
-2. 安裝依賴
-```bash
-go mod tidy
-```
+2.  安裝依賴
+    ```bash
+    go mod tidy
+    ```
 
-3. 運行應用程式
-```bash
-go run main.go models.go
-```
+3.  建置應用程式
+    ```bash
+    make build
+    ```
 
-應用程式將在 `http://localhost:8080` 啟動
+4.  資料migration (Seeding Data)
+
+    首次建置專案時需執行此語法將 mock 的機票 data insert 進 table（只需執行一次）
+    ```bash
+    make seed
+    ```  
+    > 這將會向資料庫中插入約 500 筆航班資料。每次執行都會新增資料，請注意避免重複。
+    >
+    >如果您想清空資料庫並重新填充，可以先執行 `make clean` 再執行 `make seed`。
+
+5.  運行應用程式
+    ```bash
+    make run
+    ```
+    應用程式將在 `http://localhost:8080` 啟動。
+
 
 ## API 端點
 
-### 1. 健康檢查
-```
-GET /ping
-```
-
-### 2. 搜尋航班
+### 1. 搜尋航班
 ```
 GET /flights?departure_airport=TPE&arrival_airport=HKG&date=2024-01-15&page=1&page_size=10
 ```
@@ -64,7 +94,7 @@ GET /flights?departure_airport=TPE&arrival_airport=HKG&date=2024-01-15&page=1&pa
 - `page`: 頁碼 (預設: 1)
 - `page_size`: 每頁筆數 (預設: 10)
 
-### 3. 建立預訂
+### 2. 建立預訂
 ```
 POST /bookings
 ```
@@ -77,12 +107,12 @@ POST /bookings
 }
 ```
 
-### 4. 查詢預訂狀態
+### 3. 查詢預訂狀態
 ```
 GET /bookings/:id
 ```
 
-### 5. 查詢航班詳情
+### 4. 查詢航班詳情
 ```
 GET /flights/:id
 ```
@@ -108,11 +138,25 @@ GET /flights/:id
 
 ```
 flight-booking/
-├── main.go          # 主程式和 API 路由
-├── models.go        # 資料模型定義
-├── go.mod           # Go 模組檔案
-├── go.sum           # 依賴版本鎖定
-└── README.md        # 專案說明
+├── main.go                # 應用程式進入點，負責依賴注入和啟動
+├── go.mod                 # Go 模組檔案
+├── go.sum                 # 依賴版本鎖定
+├── Makefile               # 專案自動化腳本
+├── README.md              # 專案說明
+├── cmd/
+│   └── seed/
+│       └── main.go        # 獨立的資料填充程式
+└── internal/
+    ├── database/
+    │   └── database.go    # 資料庫初始化和遷移邏輯
+    ├── handler/
+    │   ├── booking_handler.go # 預訂相關 API 處理函式
+    │   └── flight_handler.go  # 航班相關 API 處理函式
+    ├── models/
+    │   └── models.go      # 資料模型定義 (Flight, Booking)
+    └── repository/
+        ├── booking_repository.go # 預訂資料庫操作介面與實作
+        └── flight_repository.go  # 航班資料庫操作介面與實作
 ```
 
 ## 開發說明

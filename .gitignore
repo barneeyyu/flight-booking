@@ -49,3 +49,7 @@ Thumbs.db
 # Build output
 build/
 dist/
+
+# Go build output
+flight-booking
+seed
