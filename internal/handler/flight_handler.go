@@ -78,6 +78,11 @@ func (h *FlightHandler) SearchFlights(c *gin.Context) {
 		return
 	}
 
+	// TODO: 設定分頁參數的預設值與最大值，避免過大查詢影響效能。
+	// TODO: 可以考慮限制 page_size 最大值，例如 100
+	// TODO: 支援排序參數 sort_by（如 departure_time, price）與 order（asc/desc）
+	// TODO: 若未來有新需求，可支援多欄位排序或複合查詢
+
 	flights, total, err := h.FlightRepo.FindAll(query, page, pageSize)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "Internal Server Error"})
