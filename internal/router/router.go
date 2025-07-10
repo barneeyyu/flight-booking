@@ -3,6 +3,7 @@ package router
 import (
 	"flight-booking/internal/handler"
 	"flight-booking/internal/repository"
+	"flight-booking/internal/service"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -16,9 +17,19 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	flightRepo := repository.NewGORMFlightRepository(db)
 	bookingRepo := repository.NewGORMBookingRepository(db)
 
-	// Initialize handlers with their respective repositories
+	// Initialize services
+	bookingService := service.NewBookingService(bookingRepo, db)
+
+	// Initialize handlers with their respective repositories/services
 	flightHandler := handler.NewFlightHandler(flightRepo, db)
-	bookingHandler := handler.NewBookingHandler(bookingRepo, flightRepo)
+	bookingHandler := handler.NewBookingHandler(bookingService)
+
+	// Public routes
+	r.GET("/ping", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "pong",
+		})
+	})
 
 	// Flight routes
 	r.GET("/flights", flightHandler.SearchFlights)

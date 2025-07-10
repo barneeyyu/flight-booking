@@ -2,23 +2,21 @@ package handler
 
 import (
 	"flight-booking/internal/models"
-	"flight-booking/internal/repository"
-	"math/rand"
+	"flight-booking/internal/service"
 	"strconv"
-	"time"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
 // BookingHandler handles booking-related HTTP requests
 type BookingHandler struct {
-	BookingRepo repository.BookingRepository
-	FlightRepo  repository.FlightRepository // Need FlightRepo to update available seats
+	BookingService service.BookingService
 }
 
 // NewBookingHandler creates a new BookingHandler
-func NewBookingHandler(bookingRepo repository.BookingRepository, flightRepo repository.FlightRepository) *BookingHandler {
-	return &BookingHandler{BookingRepo: bookingRepo, FlightRepo: flightRepo}
+func NewBookingHandler(bookingService service.BookingService) *BookingHandler {
+	return &BookingHandler{BookingService: bookingService}
 }
 
 // CreateBooking handles flight booking requests
@@ -29,29 +27,25 @@ func (h *BookingHandler) CreateBooking(c *gin.Context) {
 		return
 	}
 
-	flight, err := h.FlightRepo.FindByID(booking.FlightID)
+	if booking.Quantity <= 0 {
+		c.JSON(400, gin.H{"error": "Quantity must be a positive integer"})
+		return
+	}
+
+	createdBooking, err := h.BookingService.CreateBooking(&booking)
 	if err != nil {
-		c.JSON(404, gin.H{"error": "Flight not found"})
+		// Handle errors from the service layer
+		if strings.Contains(err.Error(), "flight not found") {
+			c.JSON(404, gin.H{"error": err.Error()})
+		} else if strings.Contains(err.Error(), "not enough seats") {
+			c.JSON(400, gin.H{"error": err.Error()})
+		} else {
+			c.JSON(500, gin.H{"error": "Internal Server Error: " + err.Error()})
+		}
 		return
 	}
 
-	rand.Seed(time.Now().UnixNano())
-	oversold := rand.Intn(100) < 20 // 20% chance of overselling
-
-	if flight.AvailableSeats > 0 && !oversold {
-		flight.AvailableSeats--
-		h.FlightRepo.Update(flight)
-		booking.BookingStatus = "Confirmed"
-	} else {
-		booking.BookingStatus = "Waitlisted"
-	}
-
-	if err := h.BookingRepo.Create(&booking); err != nil {
-		c.JSON(500, gin.H{"error": "Internal Server Error"})
-		return
-	}
-
-	c.JSON(200, booking)
+	c.JSON(200, createdBooking)
 }
 
 // GetBooking handles requests to get a single booking by ID
@@ -62,9 +56,14 @@ func (h *BookingHandler) GetBooking(c *gin.Context) {
 		return
 	}
 
-	booking, err := h.BookingRepo.FindByID(uint(id))
+	booking, err := h.BookingService.GetBooking(uint(id))
 	if err != nil {
-		c.JSON(404, gin.H{"error": "Booking not found"})
+		// Handle errors from the service layer
+		if strings.Contains(err.Error(), "booking not found") {
+			c.JSON(404, gin.H{"error": err.Error()})
+		} else {
+			c.JSON(500, gin.H{"error": "Internal Server Error: " + err.Error()})
+		}
 		return
 	}
 
