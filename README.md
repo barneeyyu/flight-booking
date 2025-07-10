@@ -211,7 +211,7 @@ flight-booking/
     ├── router/
     │   └── router.go # Gin 路由設定
     └── service/
-        └── booking_service.go # 預訂服務邏輯（商業邏輯層）
+        └── booking_service.go # 預訂服務邏輯介面與實作（商業邏輯層）
 ```
 
 ## 授權
