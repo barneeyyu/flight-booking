@@ -26,3 +26,7 @@ clean:
 	@echo "Cleaning up..."
 	rm -f $(APP_NAME) $(SEED_APP_NAME) $(DB_FILE)
 	@echo "Cleanup complete."
+
+test:
+	@echo "Running tests..."
+	go test ./...

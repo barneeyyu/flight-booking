@@ -121,6 +121,11 @@ go version
     ```
     應用程式將在 `http://localhost:8080` 啟動。
 
+6.  跑單元測試
+    ```bash
+    make test
+    ```
+
 
 ## API 端點
 
