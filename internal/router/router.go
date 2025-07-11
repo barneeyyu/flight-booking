@@ -18,7 +18,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	bookingRepo := repository.NewGORMBookingRepository(db)
 
 	// Initialize services
-	bookingService := service.NewBookingService(bookingRepo, db)
+	bookingService := service.NewBookingService(bookingRepo, db, 10) // 設定超賣上限為 10 張
 
 	// Initialize handlers with their respective repositories/services
 	flightHandler := handler.NewFlightHandler(flightRepo, db)

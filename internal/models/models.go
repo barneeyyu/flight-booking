@@ -31,6 +31,7 @@ type Booking struct {
 	PassengerName string  `json:"passenger_name"`
 	Quantity      int     `json:"quantity"`
 	TotalPrice    float64 `json:"total_price"`
+	BookingStatus string  `json:"booking_status"` // e.g., "Confirmed", "Waitlisted"
 	// PaymentStatus string // TODO: 付款狀態（如 unpaid, paid, refunded）
 	// NotificationSent bool // TODO: 是否已通知用戶
 }

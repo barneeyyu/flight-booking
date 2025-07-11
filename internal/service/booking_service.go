@@ -10,41 +10,57 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+const (
+	BookingStatusConfirmed  = "Confirmed"
+	BookingStatusWaitlisted = "Waitlisted"
+)
+
 type BookingService interface {
 	CreateBooking(booking *models.Booking) (*models.Booking, error)
 	GetBooking(id uint) (*models.Booking, error)
 }
 
 type BookingServiceImpl struct {
-	BookingRepo repository.BookingRepository
-	DB          *gorm.DB
+	BookingRepo   repository.BookingRepository
+	DB            *gorm.DB
+	OversellLimit int
 }
 
-func NewBookingService(bookingRepo repository.BookingRepository, db *gorm.DB) BookingService {
+func NewBookingService(bookingRepo repository.BookingRepository, db *gorm.DB, oversellLimit int) BookingService {
 	return &BookingServiceImpl{
-		BookingRepo: bookingRepo,
-		DB:          db,
+		BookingRepo:   bookingRepo,
+		DB:            db,
+		OversellLimit: oversellLimit,
 	}
 }
 
 func (s *BookingServiceImpl) CreateBooking(booking *models.Booking) (*models.Booking, error) {
+	oversellLimit := s.OversellLimit
+
 	// Start a transaction
 	err := s.DB.Transaction(func(tx *gorm.DB) error {
-		// TODO: 下單前先查詢是否已存在同一乘客同一航班的訂單，避免重複訂購
-		// TODO: 像是-> existing, _ := s.BookingRepo.FindByFlightAndPassenger(booking.FlightID, booking.PassengerName)
 		var flight models.Flight
-		// Select flight with pessimistic lock and check available seats in DB
-		// Use tx for all operations within the transaction
+		// Select flight with pessimistic lock
 		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-			Where("id = ? AND available_seats >= ?", booking.FlightID, booking.Quantity).
+			Where("id = ?", booking.FlightID).
 			First(&flight).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return fmt.Errorf("flight not found or not enough seats available")
+				return fmt.Errorf("flight not found")
 			}
 			return fmt.Errorf("failed to lock flight: %w", err)
 		}
 
-		// Deduct seats
+		// Check available seats with oversell logic
+		// TODO: 超賣邏輯需要再優化，這裡只是做個簡單的範例
+		if flight.AvailableSeats >= booking.Quantity {
+			booking.BookingStatus = BookingStatusConfirmed
+		} else if flight.AvailableSeats+oversellLimit >= booking.Quantity {
+			booking.BookingStatus = BookingStatusWaitlisted
+		} else {
+			return fmt.Errorf("not enough seats: available=%d, oversell limit=%d", flight.AvailableSeats, oversellLimit)
+		}
+
+		// Deduct seats (can go negative due to oversell)
 		flight.AvailableSeats -= booking.Quantity
 
 		// Update flight within the transaction
@@ -67,6 +83,7 @@ func (s *BookingServiceImpl) CreateBooking(booking *models.Booking) (*models.Boo
 	// TODO: 訂單建立成功後可透過 Queue 發送 email 或通知用戶
 
 	if err != nil {
+		// TODO: 訂單建立失敗，可設定發信通知用戶
 		return nil, err
 	}
 
