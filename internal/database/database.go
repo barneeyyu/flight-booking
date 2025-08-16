@@ -14,8 +14,11 @@ func InitDB() (*gorm.DB, error) {
 		return nil, err
 	}
 
-	// Migrate the schema
-	db.AutoMigrate(&models.Flight{}, &models.Booking{})
+	// Migrate the schema and create indexes
+	err = db.AutoMigrate(&models.Flight{}, &models.Booking{})
+	if err != nil {
+		return nil, err
+	}
 
 	return db, nil
 }
